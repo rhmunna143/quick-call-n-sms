@@ -12,7 +12,7 @@
 - [x] **WEB-05**: Create QR code generator component in web app containing local IP and token.
 - [x] **MOB-03**: Add QR Scanner to mobile app to read configuration (ZXing implemented).
 - [x] **MOB-04**: Implement Ktor endpoints for `/ping` (heartbeat).
-- [ ] **WEB-06**: Build pairing UI to show connection status and active device.
+- [x] **WEB-06**: Build pairing UI to show connection status and active device.
 
 ## Sprint 3: SMS Engine
 - [x] **WEB-07**: Build Campaign Wizard UI (Select Audience -> Compose SMS -> Select SIM -> Execute).

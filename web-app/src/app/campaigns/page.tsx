@@ -41,11 +41,19 @@ export default function CampaignsPage() {
 
     await db.logs.bulkAdd(logs);
 
-    // TODO: Send to Android Ktor endpoint sequentially or via batches
-    // For now, simulate sending
+    // Fetch the paired IP
+    const mobileIp = localStorage.getItem('mobile_ip');
+    if (!mobileIp) {
+      alert('Please go to Settings and connect to your Android device first.');
+      setIsSending(false);
+      return;
+    }
+
+    // Process each log sequentially or in batch
     for (const log of logs) {
       try {
-        const res = await fetch('http://localhost:8080/sms/send', {
+        const endpoint = type === 'SMS' ? '/sms/send' : '/call/send';
+        const res = await fetch(`http://${mobileIp}:8080${endpoint}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -62,7 +70,6 @@ export default function CampaignsPage() {
           await db.logs.where({ campaignId, phone: log.phone }).modify({ status: 'FAILED', errorReason: 'Network error' });
         }
       } catch (err) {
-        // Android server might not be running or reachable
         await db.logs.where({ campaignId, phone: log.phone }).modify({ status: 'FAILED', errorReason: 'Android unreachable' });
       }
     }
