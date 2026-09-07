@@ -10,15 +10,15 @@
 
 ## Sprint 2: Connectivity & Pairing
 - [x] **WEB-05**: Create QR code generator component in web app containing local IP and token.
-- [ ] **MOB-03**: Add QR Scanner to mobile app to read configuration.
+- [x] **MOB-03**: Add QR Scanner to mobile app to read configuration (ZXing implemented).
 - [x] **MOB-04**: Implement Ktor endpoints for `/ping` (heartbeat).
 - [ ] **WEB-06**: Build pairing UI to show connection status and active device.
 
 ## Sprint 3: SMS Engine
 - [x] **WEB-07**: Build Campaign Wizard UI (Select Audience -> Compose SMS -> Select SIM -> Execute).
 - [x] **MOB-05**: Implement `/sms/send` endpoint in Ktor to trigger `SmsManager`.
-- [ ] **MOB-06**: Implement Android BroadcastReceiver to track SMS Sent/Delivered intents.
-- [ ] **MOB-07**: Implement `/events` (WebSocket or Server-Sent Events) to push SMS status updates back to Web App.
+- [x] **MOB-06**: Implement Android BroadcastReceiver to track SMS Sent/Delivered intents.
+- [x] **MOB-07**: Implement `/events` (WebSocket or Server-Sent Events) to push SMS status updates back to Web App.
 - [x] **WEB-08**: Build Live Dashboard to receive SMS statuses and update IndexedDB.
 
 ## Sprint 4: Reporting & Polish

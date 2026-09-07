@@ -16,6 +16,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+import android.app.PendingIntent
+import io.ktor.server.websocket.*
+import io.ktor.websocket.*
+import kotlinx.coroutines.flow.collectLatest
+
 class LocalEngineService : Service() {
 
     private val CHANNEL_ID = "LocalEngineServiceChannel"
@@ -46,22 +51,47 @@ class LocalEngineService : Service() {
 
         CoroutineScope(Dispatchers.IO).launch {
             server = embeddedServer(Netty, port = 8080) {
+                install(WebSockets)
                 routing {
                     get("/ping") {
                         call.respondText("{\"status\":\"ok\",\"device\":\"Android Engine\"}")
                     }
+                    
+                    webSocket("/events") {
+                        // Subscribe to EventBus and send to connected clients
+                        EventBus.events.collectLatest { eventJson ->
+                            send(Frame.Text(eventJson))
+                        }
+                    }
+
                     post("/sms/send") {
                         try {
-                            // In a real app we parse JSON. We will keep it simple here.
-                            // val body = call.receive<SmsRequest>()
+                            // Dummy parsing for now, in real life we parse JSON
+                            // val campaignId = requestBody.campaignId
+                            // val phoneNumber = requestBody.phoneNumber
+                            val campaignId = 1
+                            val phoneNumber = "+880123456789"
+                            val content = "Test Message"
+
                             val smsManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                                 applicationContext.getSystemService(android.telephony.SmsManager::class.java)
                             } else {
                                 android.telephony.SmsManager.getDefault()
                             }
                             
-                            // Placeholder for actual body parsing:
-                            // smsManager.sendTextMessage(body.phoneNumber, null, body.content, null, null)
+                            val sentIntent = Intent(SmsBroadcastReceiver.ACTION_SMS_SENT).apply {
+                                putExtra(SmsBroadcastReceiver.EXTRA_PHONE, phoneNumber)
+                                putExtra(SmsBroadcastReceiver.EXTRA_CAMPAIGN_ID, campaignId)
+                                setPackage(packageName)
+                            }
+                            val sentPi = PendingIntent.getBroadcast(
+                                this@LocalEngineService,
+                                phoneNumber.hashCode(),
+                                sentIntent,
+                                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                            )
+
+                            smsManager.sendTextMessage(phoneNumber, null, content, sentPi, null)
                             
                             call.respondText("{\"status\":\"queued\"}")
                         } catch (e: Exception) {

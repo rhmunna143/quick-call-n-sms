@@ -13,7 +13,7 @@
 
 ## Phase 2: Broadcast Call Engine
 - [x] Broadcast Call Engine (Upload Audio, Queue Calls)
-- [ ] Advanced Audio validation and playback tracking
+- [x] Advanced Audio validation and playback tracking (via InCallService)
 - [ ] Campaign Pause/Resume
 
 ## Phase 3
