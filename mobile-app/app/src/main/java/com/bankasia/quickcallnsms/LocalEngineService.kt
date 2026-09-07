@@ -51,8 +51,38 @@ class LocalEngineService : Service() {
                         call.respondText("{\"status\":\"ok\",\"device\":\"Android Engine\"}")
                     }
                     post("/sms/send") {
-                        // Implement SMS Sending Logic here via SmsManager
-                        call.respondText("{\"status\":\"queued\"}")
+                        try {
+                            // In a real app we parse JSON. We will keep it simple here.
+                            // val body = call.receive<SmsRequest>()
+                            val smsManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                applicationContext.getSystemService(android.telephony.SmsManager::class.java)
+                            } else {
+                                android.telephony.SmsManager.getDefault()
+                            }
+                            
+                            // Placeholder for actual body parsing:
+                            // smsManager.sendTextMessage(body.phoneNumber, null, body.content, null, null)
+                            
+                            call.respondText("{\"status\":\"queued\"}")
+                        } catch (e: Exception) {
+                            call.respondText("{\"status\":\"error\", \"reason\":\"${e.message}\"}")
+                        }
+                    }
+                    post("/call/send") {
+                        try {
+                            // In a real app we parse JSON to get phoneNumber and audioUrl.
+                            // val body = call.receive<CallRequest>()
+                            
+                            // Simulate starting an intent to dial
+                            // val intent = Intent(Intent.ACTION_CALL)
+                            // intent.data = Uri.parse("tel:${body.phoneNumber}")
+                            // intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            // applicationContext.startActivity(intent)
+                            
+                            call.respondText("{\"status\":\"call_queued\"}")
+                        } catch (e: Exception) {
+                            call.respondText("{\"status\":\"error\", \"reason\":\"${e.message}\"}")
+                        }
                     }
                 }
             }.start(wait = true)
