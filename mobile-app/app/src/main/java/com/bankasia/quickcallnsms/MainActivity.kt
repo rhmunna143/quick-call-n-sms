@@ -65,21 +65,40 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun requestDefaultDialer() {
-        val telecomManager = getSystemService(TELECOM_SERVICE) as android.telecom.TelecomManager
-        if (packageName != telecomManager.defaultDialerPackage) {
-            val intent = Intent(android.telecom.TelecomManager.ACTION_CHANGE_DEFAULT_DIALER)
-                .putExtra(android.telecom.TelecomManager.EXTRA_CHANGE_DEFAULT_DIALER_PACKAGE_NAME, packageName)
-            startActivityForResult(intent, 200)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val roleManager = getSystemService(android.app.role.RoleManager::class.java)
+            if (roleManager?.isRoleHeld(android.app.role.RoleManager.ROLE_DIALER) == true) {
+                launchScanner()
+            } else {
+                val intent = roleManager?.createRequestRoleIntent(android.app.role.RoleManager.ROLE_DIALER)
+                if (intent != null) {
+                    startActivityForResult(intent, 200)
+                }
+            }
         } else {
-            launchScanner()
+            val telecomManager = getSystemService(TELECOM_SERVICE) as android.telecom.TelecomManager
+            if (packageName != telecomManager.defaultDialerPackage) {
+                val intent = Intent(android.telecom.TelecomManager.ACTION_CHANGE_DEFAULT_DIALER)
+                    .putExtra(android.telecom.TelecomManager.EXTRA_CHANGE_DEFAULT_DIALER_PACKAGE_NAME, packageName)
+                startActivityForResult(intent, 200)
+            } else {
+                launchScanner()
+            }
         }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == 200) {
-            val telecomManager = getSystemService(TELECOM_SERVICE) as android.telecom.TelecomManager
-            if (packageName == telecomManager.defaultDialerPackage) {
+            val isDefaultDialer = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val roleManager = getSystemService(android.app.role.RoleManager::class.java)
+                roleManager?.isRoleHeld(android.app.role.RoleManager.ROLE_DIALER) == true
+            } else {
+                val telecomManager = getSystemService(TELECOM_SERVICE) as android.telecom.TelecomManager
+                packageName == telecomManager.defaultDialerPackage
+            }
+            
+            if (isDefaultDialer) {
                 launchScanner()
             } else {
                 Toast.makeText(this, "Must be Default Dialer to broadcast audio!", Toast.LENGTH_LONG).show()
