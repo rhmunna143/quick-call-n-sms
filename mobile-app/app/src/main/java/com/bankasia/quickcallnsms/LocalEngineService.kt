@@ -117,7 +117,12 @@ class LocalEngineService : Service() {
                             val body = call.receiveText()
                             val json = JSONObject(body)
                             val phoneNumber = json.optString("phoneNumber")
-                            // Call routing logic goes here...
+                            
+                            val intent = Intent(Intent.ACTION_CALL)
+                            intent.data = android.net.Uri.parse("tel:${phoneNumber}")
+                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            applicationContext.startActivity(intent)
+
                             call.respondText("{\"status\":\"call_queued\"}")
                         } catch (e: Exception) {
                             call.respondText("{\"status\":\"error\", \"reason\":\"${e.message}\"}")
