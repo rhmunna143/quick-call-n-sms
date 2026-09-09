@@ -1,7 +1,7 @@
 # Node / Web App
 node_modules/
 web-app/.next/
-web-app/out/
+web-app/out/ 
 web-app/build/
 web-app/node_modules/
 npm-debug.log*

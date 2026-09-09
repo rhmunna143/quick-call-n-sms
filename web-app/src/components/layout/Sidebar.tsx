@@ -35,7 +35,7 @@ export function Sidebar() {
         if (payload.type === 'SMS_STATUS' || payload.type === 'CALL_STATUS') {
           const { campaignId, phone, status } = payload.data;
           
-          const log = await db.logs.where({ campaignId, phone }).first();
+          const log = await db.logs.where('campaignId').equals(campaignId).and(l => l.phone === phone).first();
           if (log && log.id) {
             await db.logs.update(log.id, { 
               status, 
