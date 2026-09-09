@@ -1,9 +1,15 @@
 package com.bankasia.quickcallnsms
 
+import android.content.Context
+import android.media.AudioManager
+import android.media.MediaPlayer
 import android.telecom.Call
 import android.telecom.InCallService
+import java.io.File
 
 class QuickCallInCallService : InCallService() {
+
+    private var mediaPlayer: MediaPlayer? = null
 
     override fun onCallAdded(call: Call) {
         super.onCallAdded(call)
@@ -36,13 +42,38 @@ class QuickCallInCallService : InCallService() {
     }
 
     private fun playAnnouncementAudio(call: Call) {
-        // TODO: Actual injection of audio into the call stream requires system privileges
-        // or routing the speaker output to the microphone depending on device capabilities.
-        // As a default dialer, some devices allow injecting audio via AudioManager.
+        try {
+            val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            audioManager.isSpeakerphoneOn = true
+            audioManager.mode = AudioManager.MODE_IN_CALL
+
+            val file = File(applicationContext.filesDir, "current_campaign.mp3")
+            if (file.exists()) {
+                mediaPlayer = MediaPlayer().apply {
+                    setDataSource(file.absolutePath)
+                    setAudioStreamType(AudioManager.STREAM_VOICE_CALL)
+                    prepare()
+                    start()
+                    
+                    setOnCompletionListener {
+                        // Hang up the call when audio finishes!
+                        call.disconnect()
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     override fun onCallRemoved(call: Call) {
         super.onCallRemoved(call)
-        // Cleanup resources
+        try {
+            mediaPlayer?.stop()
+            mediaPlayer?.release()
+            mediaPlayer = null
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 }

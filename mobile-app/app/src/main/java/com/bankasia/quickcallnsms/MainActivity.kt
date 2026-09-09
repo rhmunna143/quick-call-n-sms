@@ -57,17 +57,44 @@ class MainActivity : AppCompatActivity() {
 
         startServiceBtn.setOnClickListener {
             if (checkPermissions()) {
-                val options = ScanOptions()
-                options.setDesiredBarcodeFormats(ScanOptions.QR_CODE)
-                options.setPrompt("Scan the QR code from Web App")
-                options.setCameraId(0)
-                options.setBeepEnabled(false)
-                options.setBarcodeImageEnabled(false)
-                barcodeLauncher.launch(options)
+                requestDefaultDialer()
             } else {
                 requestPermissions()
             }
         }
+    }
+
+    private fun requestDefaultDialer() {
+        val telecomManager = getSystemService(TELECOM_SERVICE) as android.telecom.TelecomManager
+        if (packageName != telecomManager.defaultDialerPackage) {
+            val intent = Intent(android.telecom.TelecomManager.ACTION_CHANGE_DEFAULT_DIALER)
+                .putExtra(android.telecom.TelecomManager.EXTRA_CHANGE_DEFAULT_DIALER_PACKAGE_NAME, packageName)
+            startActivityForResult(intent, 200)
+        } else {
+            launchScanner()
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 200) {
+            val telecomManager = getSystemService(TELECOM_SERVICE) as android.telecom.TelecomManager
+            if (packageName == telecomManager.defaultDialerPackage) {
+                launchScanner()
+            } else {
+                Toast.makeText(this, "Must be Default Dialer to broadcast audio!", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    private fun launchScanner() {
+        val options = ScanOptions()
+        options.setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+        options.setPrompt("Scan the QR code from Web App")
+        options.setCameraId(0)
+        options.setBeepEnabled(false)
+        options.setBarcodeImageEnabled(false)
+        barcodeLauncher.launch(options)
     }
 
     private fun checkPermissions(): Boolean {

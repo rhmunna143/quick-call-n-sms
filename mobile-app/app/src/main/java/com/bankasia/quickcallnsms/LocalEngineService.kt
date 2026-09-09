@@ -117,11 +117,23 @@ class LocalEngineService : Service() {
                             val body = call.receiveText()
                             val json = JSONObject(body)
                             val phoneNumber = json.optString("phoneNumber")
+                            val contentB64 = json.optString("content") // This will be "data:audio/mp3;base64,...."
                             
-                            val intent = Intent(Intent.ACTION_CALL)
-                            intent.data = android.net.Uri.parse("tel:${phoneNumber}")
-                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                            applicationContext.startActivity(intent)
+                            // 1. Save audio to disk
+                            if (contentB64.isNotEmpty() && contentB64.contains(",")) {
+                                val base64Audio = contentB64.substringAfter(",")
+                                val audioBytes = android.util.Base64.decode(base64Audio, android.util.Base64.DEFAULT)
+                                val file = java.io.File(applicationContext.filesDir, "current_campaign.mp3")
+                                file.writeBytes(audioBytes)
+                            }
+
+                            // 2. Dial using TelecomManager (Bypasses background restrictions if Default Dialer)
+                            val telecomManager = applicationContext.getSystemService(android.content.Context.TELECOM_SERVICE) as android.telecom.TelecomManager
+                            val uri = android.net.Uri.parse("tel:${phoneNumber}")
+                            val extras = android.os.Bundle().apply {
+                                putBoolean(android.telecom.TelecomManager.EXTRA_START_CALL_WITH_SPEAKERPHONE, true)
+                            }
+                            telecomManager.placeCall(uri, extras)
 
                             call.respondText("{\"status\":\"call_queued\"}")
                         } catch (e: Exception) {
