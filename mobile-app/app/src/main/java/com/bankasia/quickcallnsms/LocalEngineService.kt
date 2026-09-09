@@ -21,6 +21,12 @@ import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.flow.collectLatest
 
+import io.ktor.server.plugins.cors.routing.CORS
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
+import io.ktor.server.request.receiveText
+import org.json.JSONObject
+
 class LocalEngineService : Service() {
 
     private val CHANNEL_ID = "LocalEngineServiceChannel"
@@ -51,14 +57,23 @@ class LocalEngineService : Service() {
 
         CoroutineScope(Dispatchers.IO).launch {
             server = embeddedServer(Netty, port = 8080) {
+                install(CORS) {
+                    anyHost()
+                    allowHeader(HttpHeaders.ContentType)
+                    allowMethod(HttpMethod.Options)
+                    allowMethod(HttpMethod.Get)
+                    allowMethod(HttpMethod.Post)
+                    allowMethod(HttpMethod.Put)
+                    allowMethod(HttpMethod.Delete)
+                }
                 install(WebSockets)
+                
                 routing {
                     get("/ping") {
                         call.respondText("{\"status\":\"ok\",\"device\":\"Android Engine\"}")
                     }
                     
                     webSocket("/events") {
-                        // Subscribe to EventBus and send to connected clients
                         EventBus.events.collectLatest { eventJson ->
                             send(Frame.Text(eventJson))
                         }
@@ -66,12 +81,11 @@ class LocalEngineService : Service() {
 
                     post("/sms/send") {
                         try {
-                            // Dummy parsing for now, in real life we parse JSON
-                            // val campaignId = requestBody.campaignId
-                            // val phoneNumber = requestBody.phoneNumber
-                            val campaignId = 1
-                            val phoneNumber = "+880123456789"
-                            val content = "Test Message"
+                            val body = call.receiveText()
+                            val json = JSONObject(body)
+                            val campaignId = json.optInt("campaignId", 1)
+                            val phoneNumber = json.optString("phoneNumber")
+                            val content = json.optString("content", "Test Message")
 
                             val smsManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                                 applicationContext.getSystemService(android.telephony.SmsManager::class.java)
@@ -100,15 +114,10 @@ class LocalEngineService : Service() {
                     }
                     post("/call/send") {
                         try {
-                            // In a real app we parse JSON to get phoneNumber and audioUrl.
-                            // val body = call.receive<CallRequest>()
-                            
-                            // Simulate starting an intent to dial
-                            // val intent = Intent(Intent.ACTION_CALL)
-                            // intent.data = Uri.parse("tel:${body.phoneNumber}")
-                            // intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                            // applicationContext.startActivity(intent)
-                            
+                            val body = call.receiveText()
+                            val json = JSONObject(body)
+                            val phoneNumber = json.optString("phoneNumber")
+                            // Call routing logic goes here...
                             call.respondText("{\"status\":\"call_queued\"}")
                         } catch (e: Exception) {
                             call.respondText("{\"status\":\"error\", \"reason\":\"${e.message}\"}")

@@ -24,11 +24,25 @@ class MainActivity : AppCompatActivity() {
         if (result.contents == null) {
             Toast.makeText(this, "Cancelled", Toast.LENGTH_LONG).show()
         } else {
-            Toast.makeText(this, "Scanned: " + result.contents, Toast.LENGTH_LONG).show()
-            // Here we would parse JSON: { url, token }
-            // For now, we just start the server
+            Toast.makeText(this, "Scanned!", Toast.LENGTH_SHORT).show()
             startLocalEngineService()
-            statusText.text = "Paired! Service Running.\n${result.contents}"
+            statusText.text = "Paired! Service Running.\nMy IP: ${getLocalIpAddress()}\n\nEnter this IP in your Web App settings!"
+        }
+    }
+
+    private fun getLocalIpAddress(): String {
+        try {
+            val wifiManager = applicationContext.getSystemService(android.content.Context.WIFI_SERVICE) as android.net.wifi.WifiManager
+            val ipAddress = wifiManager.connectionInfo.ipAddress
+            return String.format(
+                "%d.%d.%d.%d",
+                ipAddress and 0xff,
+                ipAddress shr 8 and 0xff,
+                ipAddress shr 16 and 0xff,
+                ipAddress shr 24 and 0xff
+            )
+        } catch (e: Exception) {
+            return "Unknown"
         }
     }
 
